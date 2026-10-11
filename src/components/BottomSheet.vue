@@ -2,10 +2,21 @@
 // Compteur partagé entre toutes les feuilles : l'arrière-plan reste figé tant qu'une seule est ouverte.
 let locks = 0
 function lock(on) {
+  const root = document.documentElement
+  if (on && locks === 0) {
+    // Le contenu recule autour du centre de l'écran, où que la page soit défilée.
+    root.style.setProperty('--sheet-origin', `${window.scrollY + window.innerHeight / 2}px`)
+    root.classList.add('sheet-open')
+  }
   locks += on ? 1 : -1
   const app = document.getElementById('app')
   if (app) app.inert = locks > 0
-  document.documentElement.style.overflow = locks > 0 ? 'hidden' : ''
+  root.style.overflow = locks > 0 ? 'hidden' : ''
+  if (locks === 0) {
+    root.classList.remove('sheet-open')
+    root.style.removeProperty('--sheet')
+    root.style.removeProperty('--sheet-origin')
+  }
 }
 </script>
 
@@ -56,6 +67,8 @@ function apply(offset) {
     el.style.opacity = '1'
   }
   if (scrim.value) scrim.value.style.opacity = String(progress)
+  // L'arrière-plan suit la feuille : il recule à mesure qu'elle monte, et revient quand on la tire.
+  document.documentElement.style.setProperty('--sheet', progress.toFixed(3))
 }
 
 function measure() {

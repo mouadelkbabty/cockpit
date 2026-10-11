@@ -51,12 +51,25 @@ Chaque collection est une liste de documents identifiés. En mode synchronisé e
 
 ## Interface
 
-Idiome Apple en mode sombre : police système, grands titres, listes groupées, barre d'onglets translucide.
+Idiome Apple en mode sombre : police système, grands titres, listes groupées.
 Une couleur par domaine (vert argent, bleu emploi, orange sport), vérifiée pour le daltonisme sur fond noir.
 
-Les feuilles modales sont animées par un ressort plutôt que par une durée fixe :
-elles suivent le doigt, gardent la vitesse du geste au relâchement, résistent quand on les tire vers le haut
-et se rattrapent en plein mouvement. Avec « réduire les animations », elles apparaissent en fondu.
+### Mouvement
+
+Tout ce qui bouge suit le même modèle de ressort (`src/lib/motion.js`), décrit par un amortissement et une réponse
+plutôt que par une durée. Un mouvement peut donc être repris en cours de route sans à-coup.
+
+- **Barre d'onglets** : une capsule translucide qui flotte au-dessus du contenu. La lentille glisse d'un onglet à
+  l'autre ; sur téléphone on peut la saisir, la promener, et elle s'aimante à l'onglet vers lequel le geste allait.
+- **Feuilles** : elles suivent le doigt, gardent la vitesse du geste au relâchement, résistent quand on les tire vers
+  le haut. Le contenu derrière recule à mesure qu'elles montent.
+- **En-tête** : le matériau de la barre et le petit titre apparaissent au fil du défilement, pas d'un coup.
+- **Chiffres** : un montant qui change défile jusqu'à sa nouvelle valeur.
+- **Courbes** : elles se dessinent à l'apparition, puis se transforment quand les données changent.
+- **Blocs** : chaque section monte et se précise la première fois qu'elle entre à l'écran.
+
+Le rebond est réservé à ce qui vient d'un geste ou d'une validation (coche, onglet choisi, feuille lancée).
+Avec « réduire les animations », rien ne glisse : le contenu est en place d'emblée et les feuilles apparaissent en fondu.
 
 ## Limites connues
 

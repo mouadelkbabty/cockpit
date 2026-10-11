@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { savingsTotal, budgetSummary, nextDeposit, projection, goalStatus } from '../src/lib/money.js'
+import { savingsTotal, budgetSummary, nextDeposit, projection, goalStatus, expectedInflows, outlook } from '../src/lib/money.js'
 
 const accounts = [
   { id: 'lj', name: 'Livret 1', kind: 'livret', balance: 500, cap: 1600, rate: 3.75 },
@@ -97,5 +97,44 @@ describe('goalStatus', () => {
   it('dit quand l’objectif n’est pas atteint sur la période', () => {
     const short = projection({ total: 0, monthly: 10, fromMonth: '2026-10', months: 3 })
     expect(goalStatus(short, { target: 4000, date: '2026-12-31' }, 10).reachedMonth).toBe(null)
+  })
+})
+
+describe('expectedInflows', () => {
+  const deadlines = [
+    { id: 'a', title: 'Remboursement', kind: 'recevoir', amount: 400, date: '2026-12-18' },
+    { id: 'b', title: 'Déjà reçu', kind: 'recevoir', amount: 100, date: '2026-11-02', doneDates: ['2026-11-02'] },
+    { id: 'c', title: 'Passé', kind: 'recevoir', amount: 100, date: '2026-09-01' },
+    { id: 'd', title: 'Facture', kind: 'payer', amount: 300, date: '2026-11-05' },
+    { id: 'e', title: 'Répété', kind: 'recevoir', amount: 50, date: '2026-11-05', repeat: 'monthly' },
+  ]
+  it('garde les sommes à recevoir, uniques, à venir et non cochées', () => {
+    expect(expectedInflows(deadlines, '2026-10-11')).toEqual([{ date: '2026-12-18', amount: 400, title: 'Remboursement' }])
+  })
+})
+
+describe('outlook', () => {
+  const base = {
+    accounts,
+    goal: { target: 4000, date: '2026-12-31', monthly: 500 },
+    deadlines: [{ id: 'a', title: 'Remboursement', kind: 'recevoir', amount: 400, date: '2026-12-18' }],
+    today: '2026-10-11',
+  }
+  it('rassemble le total, la prévision et la position par rapport à l’objectif', () => {
+    const o = outlook(base)
+    expect(o.total).toBe(500)
+    expect(o.monthly).toBe(500)
+    expect(o.hasGoal).toBe(true)
+    expect(o.goalIndex).toBe(2)
+    expect(o.points[2]).toEqual({ month: '2026-12', amount: 2400 })
+    expect(o.status.missingAtDate).toBe(1600)
+    expect(o.ratio).toBeCloseTo(0.125)
+  })
+  it('reste utilisable sans objectif', () => {
+    const o = outlook({ ...base, goal: null })
+    expect(o.hasGoal).toBe(false)
+    expect(o.monthly).toBe(0)
+    expect(o.goalIndex).toBe(-1)
+    expect(o.ratio).toBe(0)
   })
 })

@@ -62,7 +62,9 @@ export function releaseVelocity(history) {
 }
 
 // Anime une valeur vers une cible ; `retarget` change la cible en gardant la vitesse courante.
-export function createSpring({ value = 0, onUpdate, onRest }) {
+// `precision` est l'écart en dessous duquel on considère la cible atteinte : un demi-pixel par défaut,
+// bien moins pour une valeur qui va de 0 à 1.
+export function createSpring({ value = 0, onUpdate, onRest, precision = 0.5 }) {
   let state = { x: value, v: 0 }
   let target = value
   let params = springParams()
@@ -73,7 +75,7 @@ export function createSpring({ value = 0, onUpdate, onRest }) {
     const dt = Math.min(0.032, (now - lastTime) / 1000 || 0.016)
     lastTime = now
     state = springStep(state, target, params, dt)
-    if (Math.abs(state.x - target) < 0.5 && Math.abs(state.v) < 5) {
+    if (Math.abs(state.x - target) < precision && Math.abs(state.v) < precision * 10) {
       state = { x: target, v: 0 }
       frame = null
       onUpdate?.(state.x)
@@ -96,4 +98,35 @@ export function createSpring({ value = 0, onUpdate, onRest }) {
       if (frame === null) { lastTime = performance.now(); frame = requestAnimationFrame(tick) }
     },
   }
+}
+
+// Indice du repère le plus proche d'une position (pour s'aimanter au bon onglet après un geste).
+export function nearestIndex(points, value) {
+  let best = -1
+  let gap = Infinity
+  points.forEach((p, i) => {
+    const d = Math.abs(p - value)
+    if (d < gap) {
+      gap = d
+      best = i
+    }
+  })
+  return best
+}
+
+// Série intermédiaire entre deux séries de même longueur (t de 0 à 1).
+export function blend(from, to, t) {
+  return to.map((v, i) => from[i] + (v - from[i]) * t)
+}
+
+// Même courbe, autre nombre de points : sert à transformer une courbe en une autre de longueur différente.
+export function resample(values, n) {
+  if (!values.length) return Array.from({ length: n }, () => 0)
+  if (values.length === 1 || n === 1) return Array.from({ length: n }, () => values[0])
+  return Array.from({ length: n }, (_, i) => {
+    const pos = (i * (values.length - 1)) / (n - 1)
+    const lo = Math.floor(pos)
+    const hi = Math.min(values.length - 1, lo + 1)
+    return values[lo] + (values[hi] - values[lo]) * (pos - lo)
+  })
 }

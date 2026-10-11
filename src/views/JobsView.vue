@@ -118,10 +118,10 @@ defineExpose({ add: () => edit(null), addLabel: 'Ajouter une candidature' })
 
 <template>
   <div class="view">
-    <h1 class="large-title">Emploi</h1>
-    <p v-if="summary" class="subhead secondary view-summary">{{ summary }}</p>
+    <h1 v-reveal class="large-title">Emploi</h1>
+    <p v-if="summary" v-reveal class="subhead secondary view-summary">{{ summary }}</p>
 
-    <section v-if="!apps.length" class="section">
+    <section v-if="!apps.length" v-reveal class="section">
       <div class="group">
         <div class="empty">
           <p class="headline">Aucune candidature suivie.</p>
@@ -131,7 +131,7 @@ defineExpose({ add: () => edit(null), addLabel: 'Ajouter une candidature' })
       </div>
     </section>
 
-    <section v-if="due.length" class="section">
+    <section v-if="due.length" v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">À relancer</h2>
       </div>
@@ -146,7 +146,7 @@ defineExpose({ add: () => edit(null), addLabel: 'Ajouter une candidature' })
       </div>
     </section>
 
-    <section v-for="g in groups" :key="g.id" class="section">
+    <section v-for="g in groups" :key="g.id" v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">{{ g.label }}</h2>
         <span class="subhead secondary num">{{ g.items.length }}</span>
@@ -163,7 +163,7 @@ defineExpose({ add: () => edit(null), addLabel: 'Ajouter une candidature' })
       </div>
     </section>
 
-    <section v-if="closed.length" class="section">
+    <section v-if="closed.length" v-reveal class="section">
       <div class="group">
         <button class="row" type="button" :aria-expanded="showClosed" @click="showClosed = !showClosed">
           <span class="row-main"><span class="row-title">Refus ou abandon</span></span>

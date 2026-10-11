@@ -40,7 +40,10 @@ const strip = computed(() =>
 const doneThisWeek = computed(() => weekDone(sessions.value, selected.value).length)
 const plannedPerWeek = computed(() => (program.value?.week || []).filter(Boolean).length)
 
+const weekDirection = ref('next')
+
 function shiftWeek(n) {
+  weekDirection.value = n > 0 ? 'next' : 'prev'
   selected.value = addDays(selected.value, 7 * n)
 }
 
@@ -224,12 +227,12 @@ function useTemplate() {
 
 <template>
   <div class="view">
-    <h1 class="large-title">Sport</h1>
-    <p v-if="hasProgram" class="subhead secondary view-summary">
+    <h1 v-reveal class="large-title">Sport</h1>
+    <p v-if="hasProgram" v-reveal class="subhead secondary view-summary">
       {{ doneThisWeek }} {{ doneThisWeek > 1 ? 'séances faites' : 'séance faite' }} cette semaine sur {{ plannedPerWeek }} prévues
     </p>
 
-    <section v-if="!hasProgram" class="section">
+    <section v-if="!hasProgram" v-reveal class="section">
       <div class="group">
         <div class="empty">
           <p class="headline">Aucun programme pour l'instant.</p>
@@ -244,12 +247,13 @@ function useTemplate() {
     </section>
 
     <template v-else>
-      <section class="section">
+      <section v-reveal class="section">
         <div class="week">
           <button class="icon-btn week-nav" type="button" aria-label="Semaine précédente" @click="shiftWeek(-1)">
             <Icon class="back" name="chevron" :size="16" />
           </button>
-          <div class="week-days">
+          <Transition :name="`week-${weekDirection}`">
+          <div :key="weekStart" class="week-days">
             <button
               v-for="d in strip"
               :key="d.iso"
@@ -265,13 +269,14 @@ function useTemplate() {
               <span class="week-mark" :class="{ done: d.done, planned: d.planned }" />
             </button>
           </div>
+          </Transition>
           <button class="icon-btn week-nav" type="button" aria-label="Semaine suivante" @click="shiftWeek(1)">
             <Icon name="chevron" :size="16" />
           </button>
         </div>
       </section>
 
-      <section class="section">
+      <section v-reveal class="section">
         <div class="section-head">
           <h2 class="title2">{{ day ? day.name : 'Repos' }}</h2>
           <span class="subhead secondary">{{ selected === today ? "Aujourd'hui" : dateShort(selected, today) }}</span>
@@ -345,7 +350,7 @@ function useTemplate() {
         </p>
       </section>
 
-      <section class="section">
+      <section v-reveal class="section">
         <div class="section-head">
           <h2 class="title2">Progression</h2>
         </div>
@@ -379,7 +384,7 @@ function useTemplate() {
       </section>
     </template>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Poids du corps</h2>
       </div>
@@ -414,7 +419,7 @@ function useTemplate() {
       </p>
     </section>
 
-    <section v-if="hasProgram" class="section">
+    <section v-if="hasProgram" v-reveal class="section">
       <div class="group">
         <button class="row link-row" type="button" @click="editing = true">Modifier le programme</button>
       </div>
@@ -430,9 +435,10 @@ function useTemplate() {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   margin: 0 -0.5rem;
+  overflow-x: clip;
 }
 
-.week-nav {
+.icon-btn.week-nav {
   width: 2rem;
   color: var(--label3);
 }
@@ -444,6 +450,27 @@ function useTemplate() {
 .week-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-area: 1 / 2;
+}
+
+/* Changer de semaine : l'ancienne sort d'un côté, la nouvelle entre de l'autre. */
+.week-next-enter-active,
+.week-next-leave-active,
+.week-prev-enter-active,
+.week-prev-leave-active {
+  transition: transform 520ms var(--spring), opacity 220ms ease;
+}
+
+.week-next-enter-from,
+.week-prev-leave-to {
+  opacity: 0;
+  transform: translateX(28%);
+}
+
+.week-next-leave-to,
+.week-prev-enter-from {
+  opacity: 0;
+  transform: translateX(-28%);
 }
 
 .week-day {
@@ -477,6 +504,14 @@ function useTemplate() {
   background: var(--label);
   color: #000;
   font-weight: 600;
+  /* Le jour choisi se pose avec un rebond. */
+  animation: day-pop 520ms var(--spring-bounce);
+}
+
+@keyframes day-pop {
+  from {
+    transform: scale(0.6);
+  }
 }
 
 .week-day.today[aria-pressed='true'] .week-num {
@@ -493,9 +528,27 @@ function useTemplate() {
   box-shadow: inset 0 0 0 1px var(--label3);
 }
 
+.week-mark {
+  transition: background 240ms ease, box-shadow 240ms ease, transform 520ms var(--spring-bounce);
+}
+
 .week-mark.done {
   background: var(--tint);
   box-shadow: none;
+  transform: scale(1.25);
+}
+
+/* Une série validée : la ligne s'éclaire brièvement. */
+.set {
+  transition: background 600ms ease;
+}
+
+.set-field {
+  transition: box-shadow 160ms ease, background 240ms ease;
+}
+
+.set.done .set-field {
+  background: rgba(118, 118, 128, 0.14);
 }
 
 .exercise + .exercise {

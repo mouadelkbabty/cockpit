@@ -74,3 +74,38 @@ export function goalStatus(points, goal, monthly, depositDoneMonth = null) {
   }
   return { reachedMonth: reached ? reached.month : null, amountAtDate, missingAtDate, neededMonthly }
 }
+
+// Sommes « à recevoir » qui comptent dans la prévision : uniques, à venir, pas encore cochées.
+export function expectedInflows(deadlines, today) {
+  return deadlines
+    .filter(
+      (d) =>
+        d.kind === 'recevoir' &&
+        num(d.amount) > 0 &&
+        (d.repeat || 'none') === 'none' &&
+        d.date >= today &&
+        !(d.doneDates || []).includes(d.date),
+    )
+    .map((d) => ({ date: d.date, amount: num(d.amount), title: d.title }))
+}
+
+// Vue d'ensemble de l'épargne, partagée par l'accueil et l'onglet Argent.
+export function outlook({ accounts, goal, deadlines, today, months = 36 }) {
+  const total = savingsTotal(accounts)
+  const monthly = num(goal?.monthly)
+  const target = num(goal?.target)
+  const inflows = expectedInflows(deadlines, today)
+  const done = goal?.depositDoneMonth || null
+  const points = projection({ total, monthly, fromMonth: monthKey(today), months, depositDoneMonth: done, inflows })
+  return {
+    total,
+    monthly,
+    target,
+    hasGoal: target > 0,
+    ratio: target > 0 ? Math.min(1, total / target) : 0,
+    inflows,
+    points,
+    status: goalStatus(points, goal, monthly, done),
+    goalIndex: goal?.date ? points.findIndex((p) => p.month === monthKey(goal.date)) : -1,
+  }
+}

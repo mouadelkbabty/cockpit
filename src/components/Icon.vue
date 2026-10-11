@@ -9,7 +9,7 @@ const PATHS = {
   settings: '<path d="M4 7h8M18.5 7H20M4 12h1.5M12 12h8M4 17h6M16.5 17H20"/><circle cx="15.25" cy="7" r="2.25"/><circle cx="8.75" cy="12" r="2.25"/><circle cx="13.25" cy="17" r="2.25"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   chevron: '<path d="M9.5 6l6 6-6 6"/>',
-  check: '<path d="M5.5 12.5l4.25 4.25L18.5 8"/>',
+  check: '<path pathLength="1" d="M5.5 12.5l4.25 4.25L18.5 8"/>',
   close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
 }
 </script>

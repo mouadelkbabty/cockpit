@@ -42,9 +42,9 @@ function erase() {
 
 <template>
   <div class="view">
-    <h1 class="large-title">Réglages</h1>
+    <h1 v-reveal class="large-title">Réglages</h1>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Synchronisation</h2>
       </div>
@@ -77,7 +77,7 @@ function erase() {
       </p>
     </section>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Données</h2>
         <span class="subhead secondary num">{{ count }} éléments</span>
@@ -92,13 +92,13 @@ function erase() {
       </p>
     </section>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="group">
         <button class="row btn-danger" type="button" :disabled="!count" @click="erasing = true">Tout effacer</button>
       </div>
     </section>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Sur ton téléphone</h2>
       </div>

@@ -1,16 +1,18 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { state, setting, save, remove, saveSetting } from '../store/index.js'
+import { state, save, remove, saveSetting } from '../store/index.js'
+import { useSavings } from '../store/savings.js'
 import { toggleDeadline } from '../store/actions.js'
 import { today } from '../lib/now.js'
 import { tap } from '../lib/haptic.js'
 import { monthKey, addMonthKey, diffDays } from '../lib/dates.js'
-import { savingsTotal, budgetSummary, nextDeposit, projection, goalStatus } from '../lib/money.js'
+import { budgetSummary, nextDeposit } from '../lib/money.js'
 import { upcoming, occurrences, REPEATS } from '../lib/deadlines.js'
 import { eur, percent, dateShort, relativeDay, monthLabel, monthName, monthShort } from '../lib/format.js'
 import Icon from '../components/Icon.vue'
 import EditSheet from '../components/EditSheet.vue'
 import TrendChart from '../components/TrendChart.vue'
+import AnimatedNumber from '../components/AnimatedNumber.vue'
 
 const KINDS = [
   { id: 'livret', label: 'Livret' },
@@ -19,10 +21,10 @@ const KINDS = [
 ]
 const KIND_ORDER = { livret: 0, bourse: 1, courant: 2 }
 
-const goal = setting('goal')
+const { goal, savings } = useSavings()
 const month = computed(() => monthKey(today.value))
-const monthly = computed(() => Number(goal.value?.monthly) || 0)
-const hasGoal = computed(() => Number(goal.value?.target) > 0)
+const monthly = computed(() => savings.value.monthly)
+const hasGoal = computed(() => savings.value.hasGoal)
 
 const accounts = computed(() =>
   [...state.data.accounts].sort(
@@ -32,35 +34,14 @@ const accounts = computed(() =>
       (Number(b.rate) || 0) - (Number(a.rate) || 0),
   ),
 )
-const total = computed(() => savingsTotal(accounts.value))
+const total = computed(() => savings.value.total)
 
 // ---------- Prévision ----------
 
-const inflows = computed(() =>
-  state.data.deadlines
-    .filter(
-      (d) =>
-        d.kind === 'recevoir' &&
-        d.amount > 0 &&
-        (d.repeat || 'none') === 'none' &&
-        d.date >= today.value &&
-        !(d.doneDates || []).includes(d.date),
-    )
-    .map((d) => ({ date: d.date, amount: d.amount, title: d.title })),
-)
-
-const long = computed(() =>
-  projection({
-    total: total.value,
-    monthly: monthly.value,
-    fromMonth: month.value,
-    months: 36,
-    depositDoneMonth: goal.value?.depositDoneMonth,
-    inflows: inflows.value,
-  }),
-)
-const status = computed(() => goalStatus(long.value, goal.value, monthly.value, goal.value?.depositDoneMonth))
-const goalIndex = computed(() => (goal.value?.date ? long.value.findIndex((p) => p.month === monthKey(goal.value.date)) : -1))
+const inflows = computed(() => savings.value.inflows)
+const long = computed(() => savings.value.points)
+const status = computed(() => savings.value.status)
+const goalIndex = computed(() => savings.value.goalIndex)
 
 const chartPoints = computed(() => {
   const reached = long.value.findIndex((p) => p.month === status.value.reachedMonth)
@@ -343,10 +324,10 @@ function fill(a) {
 
 <template>
   <div class="view">
-    <h1 class="large-title">Argent</h1>
+    <h1 v-reveal class="large-title">Argent</h1>
 
-    <section class="hero">
-      <p class="display num">{{ eur(total) }}</p>
+    <section v-reveal class="hero">
+      <p class="display"><AnimatedNumber :value="total" :format="eur" :from="0" /></p>
       <p class="subhead secondary hero-sub">
         <template v-if="hasGoal">
           épargnés sur {{ eur(goal.target) }} visés<template v-if="goal.date"> pour le {{ dateShort(goal.date, today) }}</template>
@@ -377,22 +358,22 @@ function fill(a) {
       </button>
     </section>
 
-    <section v-if="monthly > 0 && accounts.length" class="section">
+    <section v-if="monthly > 0 && accounts.length" v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Versement de {{ monthName(month) }}</h2>
       </div>
-      <div class="group">
-        <template v-if="depositDone">
+      <Transition name="swap" mode="out-in">
+        <div v-if="depositDone" key="done" class="group">
           <div class="row with-lead">
-            <span class="lead" style="color: var(--money)"><Icon name="check" :size="20" /></span>
+            <span class="lead drawn" style="color: var(--money)"><Icon name="check" :size="20" /></span>
             <div class="row-main">
               <div class="row-title">Versement enregistré</div>
               <div class="row-sub">Le prochain sera proposé en {{ monthName(addMonthKey(month, 1)) }}.</div>
             </div>
           </div>
           <button class="row link-row" type="button" @click="undoDeposit">Annuler ce versement</button>
-        </template>
-        <template v-else>
+        </div>
+        <div v-else key="plan" class="group">
           <div v-for="p in plan" :key="p.accountId || 'reste'" class="row">
             <div class="row-main">
               <div class="row-title">{{ p.account ? p.account.name : 'À placer ailleurs' }}</div>
@@ -408,12 +389,12 @@ function fill(a) {
           <div class="row row-action">
             <button class="btn btn-filled btn-block" type="button" @click="confirmDeposit">C'est versé</button>
           </div>
-        </template>
-      </div>
+        </div>
+      </Transition>
       <p v-if="!depositDone" class="section-note footnote">Les soldes de tes livrets sont mis à jour quand tu confirmes.</p>
     </section>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Comptes</h2>
       </div>
@@ -422,31 +403,31 @@ function fill(a) {
           <span class="row-main">
             <span class="row-title">{{ a.name }}</span>
             <span v-if="accountNote(a)" class="row-sub">{{ accountNote(a) }}</span>
-            <span v-if="a.cap" class="meter account-meter"><i :style="{ width: `${fill(a) * 100}%` }" /></span>
+            <span v-if="a.cap" class="meter account-meter"><i :style="{ '--fill': fill(a) }" /></span>
           </span>
-          <span class="row-value">{{ eur(a.balance) }}</span>
+          <AnimatedNumber class="row-value" :value="Number(a.balance) || 0" :format="eur" />
           <Icon class="chevron" name="chevron" :size="14" />
         </button>
         <button class="row link-row" type="button" @click="editAccount(null)">Ajouter un compte</button>
       </div>
     </section>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Budget du mois</h2>
       </div>
       <div v-if="budgetLines.length" class="group figures">
         <div>
           <span class="footnote secondary">Revenus</span>
-          <span class="num">{{ eur(budget.income) }}</span>
+          <AnimatedNumber :value="budget.income" :format="eur" />
         </div>
         <div>
           <span class="footnote secondary">Dépenses</span>
-          <span class="num">{{ eur(budget.expenses) }}</span>
+          <AnimatedNumber :value="budget.expenses" :format="eur" />
         </div>
         <div>
           <span class="footnote secondary">Reste</span>
-          <span class="num headline" :class="{ late: budget.rest < 0 }">{{ eur(budget.rest) }}</span>
+          <AnimatedNumber class="headline" :class="{ late: budget.rest < 0 }" :value="budget.rest" :format="eur" />
         </div>
       </div>
       <p v-for="n in budgetNotes" :key="n" class="section-note footnote">{{ n }}</p>
@@ -472,16 +453,17 @@ function fill(a) {
       </div>
     </section>
 
-    <section class="section">
+    <section v-reveal class="section">
       <div class="section-head">
         <h2 class="title2">Échéances</h2>
       </div>
-      <div class="segmented scope" role="group" aria-label="Période affichée">
+      <div class="segmented scope" role="group" aria-label="Période affichée" :style="{ '--i': scope === 'soon' ? 0 : 1, '--n': 2 }">
         <button type="button" :aria-pressed="scope === 'soon'" @click="scope = 'soon'">90 jours</button>
         <button type="button" :aria-pressed="scope === 'all'" @click="scope = 'all'">Toutes</button>
       </div>
 
-      <div v-if="scope === 'soon'" class="group">
+      <Transition name="swap" mode="out-in">
+      <div v-if="scope === 'soon'" key="soon" class="group">
         <p v-if="!soon.length" class="empty">Rien dans les 90 prochains jours.</p>
         <div v-for="d in soon" :key="`${d.id}-${d.date}`" class="row with-lead" :class="{ 'is-done': d.done }">
           <button
@@ -503,7 +485,7 @@ function fill(a) {
         <button class="row link-row" type="button" @click="editDeadline(null)">Ajouter une échéance</button>
       </div>
 
-      <div v-else class="group">
+      <div v-else key="all" class="group">
         <p v-if="!everything.length" class="empty">Aucune échéance enregistrée.</p>
         <button v-for="e in everything" :key="e.deadline.id" class="row" type="button" @click="editDeadline(e.deadline)">
           <span class="row-main">
@@ -517,6 +499,7 @@ function fill(a) {
         </button>
         <button class="row link-row" type="button" @click="editDeadline(null)">Ajouter une échéance</button>
       </div>
+      </Transition>
     </section>
 
     <EditSheet
@@ -532,6 +515,18 @@ function fill(a) {
 </template>
 
 <style>
+/* La coche de confirmation se dessine. */
+.drawn path {
+  stroke-dasharray: 1;
+  animation: draw-check 380ms ease-out 160ms both;
+}
+
+@keyframes draw-check {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
 .hero {
   margin-top: 1.25rem;
 }

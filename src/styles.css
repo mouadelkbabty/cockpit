@@ -22,10 +22,14 @@
   --alert: #ff5a4f;
   --tint: var(--label);
 
-  --radius: 0.875rem;
+  /* Ressorts pour les transitions CSS (calculés à partir du même modèle que src/lib/motion.js). */
+  --spring: linear(0, 0.064, 0.197, 0.346, 0.486, 0.605, 0.702, 0.779, 0.837, 0.882, 0.914, 0.939, 0.956, 0.969, 0.978, 0.984, 0.989, 0.992, 0.995, 0.996, 1);
+  --spring-bounce: linear(0, 0.064, 0.21, 0.387, 0.561, 0.713, 0.834, 0.924, 0.984, 1.021, 1.04, 1.046, 1.044, 1.038, 1.03, 1.022, 1.014, 1.009, 1.004, 1.001, 0.999, 0.998, 0.998, 0.998, 0.998, 0.999, 0.999, 0.999, 1);
+
+  --radius: 1.125rem;
   --pad: 1rem;
   --top-h: 2.75rem;
-  --bar-h: 3.25rem;
+  --bar-h: 4rem;
   --side-w: 15rem;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -50,7 +54,6 @@ body {
   font-size: 1.0625rem;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
 }
 
 button,
@@ -132,199 +135,6 @@ button {
 
 .tertiary {
   color: var(--label3);
-}
-
-/* ---------- Structure ---------- */
-
-.shell {
-  min-height: 100dvh;
-}
-
-.main {
-  padding: calc(var(--top-h) + var(--safe-t)) var(--pad) calc(var(--bar-h) + var(--safe-b) + 2rem);
-  max-width: 46rem;
-  margin: 0 auto;
-}
-
-.topbar {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 20;
-  height: calc(var(--top-h) + var(--safe-t));
-  padding: var(--safe-t) 0.5rem 0;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-}
-
-/* Bord de défilement : le matériau n'apparaît que lorsque du contenu passe dessous. */
-.topbar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--material);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-  opacity: 0;
-  transition: opacity 180ms ease;
-}
-
-.topbar.scrolled::before {
-  opacity: 1;
-}
-
-.topbar-title {
-  font-weight: 600;
-  opacity: 0;
-  transform: translateY(0.25rem);
-  transition: opacity 180ms ease, transform 180ms ease;
-}
-
-.topbar.scrolled .topbar-title {
-  opacity: 1;
-  transform: none;
-}
-
-.topbar-actions {
-  justify-self: end;
-  display: flex;
-  gap: 0.25rem;
-}
-
-.icon-btn {
-  width: 2.75rem;
-  height: 2.75rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--tint);
-  transition: transform 100ms ease-out, background 100ms ease-out;
-}
-
-.icon-btn:active {
-  transform: scale(0.92);
-  background: var(--fill);
-}
-
-.tabbar {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 20;
-  height: calc(var(--bar-h) + var(--safe-b));
-  padding: 0 0.25rem var(--safe-b);
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  background: var(--material);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  border-top: 0.5px solid rgba(255, 255, 255, 0.12);
-}
-
-.tab {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 0.125rem;
-  color: var(--label3);
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: transform 100ms ease-out;
-}
-
-.tab:active {
-  transform: scale(0.92);
-}
-
-.tab[aria-current='page'] {
-  color: var(--tab-color, var(--label));
-}
-
-.tab-settings {
-  display: none;
-}
-
-.tabbar-brand {
-  display: none;
-}
-
-@media (min-width: 54rem) {
-  .tabbar {
-    inset: 0 auto 0 0;
-    width: var(--side-w);
-    height: auto;
-    padding: 1.25rem 0.75rem;
-    grid-auto-flow: row;
-    grid-auto-columns: auto;
-    grid-auto-rows: max-content;
-    align-content: start;
-    gap: 0.125rem;
-    /* Matériau plus lourd : une région de structure, pas un contrôle. */
-    background: #0e0e10;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    border-top: 0;
-    border-right: 0.5px solid var(--sep);
-  }
-
-  .tabbar-brand {
-    display: block;
-    padding: 0.25rem 0.75rem 1rem;
-    font-size: 1.375rem;
-    font-weight: 700;
-    letter-spacing: -0.012em;
-  }
-
-  .tab {
-    grid-auto-flow: column;
-    justify-content: start;
-    justify-items: start;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.625rem;
-    font-size: 1rem;
-    letter-spacing: 0;
-    color: var(--label2);
-  }
-
-  .tab[aria-current='page'] {
-    background: var(--fill);
-    color: var(--label);
-  }
-
-  .tab[aria-current='page'] svg {
-    color: var(--tab-color, var(--label));
-  }
-
-  .tab-settings {
-    display: grid;
-  }
-
-  .topbar {
-    left: var(--side-w);
-  }
-
-  .topbar .settings-btn {
-    display: none;
-  }
-
-  .main {
-    margin-left: var(--side-w);
-    max-width: none;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    padding-bottom: 3rem;
-  }
-
-  .main > * {
-    max-width: 44rem;
-    margin-left: auto;
-    margin-right: auto;
-  }
 }
 
 /* ---------- Sections et listes groupées ---------- */
@@ -462,10 +272,27 @@ button.row:active {
 .check[aria-checked='true'] .check-ring {
   background: var(--check, var(--label));
   border-color: var(--check, var(--label));
+  animation: check-pop 560ms var(--spring-bounce);
 }
 
-.check[aria-checked='false'] .check-ring svg {
-  opacity: 0;
+.check-ring svg path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.check[aria-checked='true'] .check-ring svg path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 240ms ease-out 80ms;
+}
+
+@keyframes check-pop {
+  from {
+    transform: scale(0.7);
+  }
+}
+
+.row-title {
+  transition: color 240ms ease;
 }
 
 .is-done .row-title {
@@ -504,13 +331,14 @@ button.row:active {
   font-weight: 600;
   background: var(--fill);
   color: var(--tint);
-  transition: transform 100ms ease-out, opacity 100ms ease-out;
+  transition: transform 520ms var(--spring-bounce), opacity 200ms ease-out;
 }
 
-/* Le retour visuel part à l'appui, pas au relâchement. */
+/* Le retour visuel part à l'appui, sans attendre ; au relâchement, le bouton revient en ressort. */
 .btn:active {
-  transform: scale(0.97);
-  opacity: 0.8;
+  transform: scale(0.96);
+  opacity: 0.85;
+  transition: transform 90ms ease-out, opacity 90ms ease-out;
 }
 
 .btn-filled {
@@ -563,10 +391,19 @@ button.row:active {
 
 .meter > i {
   display: block;
+  width: 100%;
   height: 100%;
   border-radius: 0.125rem;
   background: var(--tint);
-  transform-origin: left;
+  transform: translateX(calc((var(--fill, 0) - 1) * 100%));
+  transition: transform 900ms var(--spring);
+}
+
+/* À l'apparition, la jauge se remplit depuis zéro. */
+@starting-style {
+  .meter > i {
+    transform: translateX(-100%);
+  }
 }
 
 /* ---------- Formulaires dans une feuille ---------- */
@@ -712,26 +549,42 @@ button.row:active {
 }
 
 .segmented {
+  position: relative;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   padding: 2px;
-  border-radius: 0.5625rem;
+  border-radius: 0.625rem;
   background: var(--fill);
 }
 
+/* Le curseur glisse d'un choix à l'autre ; --i est l'indice choisi, --n le nombre de choix. */
+.segmented::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--n, 2));
+  border-radius: 0.5rem;
+  background: #636366;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 520ms var(--spring);
+}
+
 .segmented button {
+  position: relative;
   min-height: 2rem;
-  border-radius: 0.4375rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--label);
+  color: var(--label2);
+  transition: color 200ms ease;
 }
 
 .segmented button[aria-pressed='true'] {
-  background: #636366;
+  color: var(--label);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .visually-hidden {
@@ -768,16 +621,43 @@ table.plain thead th {
   font-size: 0.8125rem;
 }
 
-/* ---------- Préférences d'accessibilité ---------- */
+/* ---------- Mouvement ---------- */
 
-@media (prefers-reduced-transparency: reduce) {
-  .topbar::before,
-  .tabbar {
-    background: #161618;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
+/* Apparition : le bloc monte de quelques points et se précise. */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 1.125rem, 0) scale(0.985);
 }
+
+.reveal.reveal-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 360ms ease-out, transform 620ms var(--spring);
+}
+
+/* Échange de deux états au même endroit (versement proposé, versement fait). */
+.swap-enter-active,
+.swap-leave-active {
+  transition: opacity 180ms ease, transform 420ms var(--spring);
+}
+
+.swap-enter-from {
+  opacity: 0;
+  transform: translateY(0.375rem) scale(0.97);
+}
+
+.swap-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* Le grand titre grossit quand on tire la page vers le bas. */
+.large-title {
+  transform-origin: left bottom;
+  transform: scale(calc(1 + var(--pull, 0)));
+}
+
+/* ---------- Préférences d'accessibilité ---------- */
 
 @media (prefers-contrast: more) {
   :root {
@@ -790,13 +670,6 @@ table.plain thead th {
   .form-group {
     outline: 1px solid var(--sep);
   }
-
-  .topbar::before,
-  .tabbar {
-    background: #000;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -805,6 +678,7 @@ table.plain thead th {
   *::after {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
   }
 }
 
@@ -817,12 +691,4 @@ table.plain thead th {
   content: '';
   position: absolute;
   inset: -0.375rem;
-}
-
-/* Sans flou d'arrière-plan, les barres deviennent opaques plutôt qu'illisibles. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .topbar::before,
-  .tabbar {
-    background: #161618;
-  }
 }
