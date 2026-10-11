@@ -9,7 +9,7 @@
   --fill: rgba(118, 118, 128, 0.24);
   --fill-strong: rgba(118, 118, 128, 0.36);
   --sep: rgba(84, 84, 88, 0.55);
-  --material: rgba(22, 22, 24, 0.72);
+  --material: rgba(22, 22, 24, 0.82);
 
   --label: #fff;
   --label2: rgba(235, 235, 245, 0.64);
@@ -817,4 +817,12 @@ table.plain thead th {
   content: '';
   position: absolute;
   inset: -0.375rem;
+}
+
+/* Sans flou d'arrière-plan, les barres deviennent opaques plutôt qu'illisibles. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar::before,
+  .tabbar {
+    background: #161618;
+  }
 }
