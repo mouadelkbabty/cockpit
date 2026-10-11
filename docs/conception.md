@@ -10,7 +10,7 @@ L'écran d'accueil rassemble ce qui demande une action le jour même.
 
 | Sujet | Choix | Raison |
 | --- | --- | --- |
-| Hébergement | GitHub Pages, mis en ligne par GitHub Actions | Gratuit, sans serveur à entretenir |
+| Hébergement | GitHub Pages (branche `gh-pages`, remplie par GitHub Actions) | Gratuit, sans serveur à entretenir |
 | Interface | Vue 3 et Vite | Léger, un seul paquet à installer côté navigateur |
 | Données | Sur l'appareil par défaut, Firestore après configuration | Le site est utilisable tout de suite ; la synchronisation s'ajoute sans rien réécrire |
 | Connexion | Compte Google (Firebase Authentication) | Pas de mot de passe à gérer |
